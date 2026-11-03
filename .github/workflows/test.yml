@@ -1,0 +1,34 @@
+name: Test formula
+
+on:
+  pull_request:
+    paths:
+      - 'Formula/**'
+      - 'templates/**'
+      - 'scripts/**'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout tap
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Without a formula yet (before the first update run) render one for the newest release.
+      - name: Ensure a formula exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ ! -f Formula/c9s.rb ]; then
+            tag=$(gh release list --repo tmuntaner/credential-manager --limit 1 --json tagName --jq '.[0].tagName')
+            scripts/update.sh "$tag"
+          fi
+
+      - name: Verify formula
+        run: scripts/verify.sh

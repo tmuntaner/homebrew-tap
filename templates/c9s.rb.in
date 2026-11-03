@@ -1,0 +1,20 @@
+class C9s < Formula
+  desc "Cloud credential manager"
+  homepage "https://github.com/tmuntaner/credential-manager"
+  url "@URL@"
+  sha256 "@SHA256@"
+  license "EUPL-1.2"
+
+  depends_on "cargo-about" => :build
+  depends_on "rust" => :build
+
+  def install
+    # license.txt is generated (and gitignored), but the binary embeds it.
+    system "cargo", "about", "generate", "about.txt.hbs", "-o", "license.txt"
+    system "cargo", "install", *std_cargo_args
+  end
+
+  test do
+    assert_match version.to_s, shell_output("#{bin}/c9s --version")
+  end
+end
