@@ -1,20 +1,70 @@
 class C9s < Formula
   desc "Cloud credential manager"
   homepage "https://github.com/tmuntaner/credential-manager"
-  url "https://github.com/tmuntaner/credential-manager/archive/refs/tags/v0.1.0-beta2.tar.gz"
-  sha256 "4fb37f5c23735215f7379fd07063f84c0e531084451451c61cdef652f4cd05e3"
+  url "https://github.com/tmuntaner/credential-manager/archive/refs/tags/v0.1.0-beta3.tar.gz"
+  sha256 "6f3ae2ea091f26cb360f4857260b0bb492693d6b4d1572ea3e6a2acc159555bd"
   license "EUPL-1.2"
 
   depends_on "cargo-about" => :build
   depends_on "rust" => :build
 
+  # GPG passphrase prompts need a native pinentry on macOS.
+  on_macos do
+    depends_on "pinentry-mac"
+  end
+
   def install
     # license.txt is generated (and gitignored), but the binary embeds it.
     system "cargo", "about", "generate", "about.txt.hbs", "-o", "license.txt"
-    system "cargo", "install", *std_cargo_args
+    # One workspace build so the CLI and GUI compile their shared dependencies once.
+    # (The GUI is not a default workspace member, so a plain build would leave it out.)
+    system "cargo", "build", "--release", "--locked", "--all"
+    bin.install "target/release/c9s", "target/release/c9s-egui"
+
+    install_app_bundle if OS.mac?
+  end
+
+  # Wrap the GUI in a C9s.app so it can be started from Finder, Launchpad or Spotlight.
+  def install_app_bundle
+    macos = prefix/"C9s.app/Contents/MacOS"
+    macos.mkpath
+    cp bin/"c9s-egui", macos/"c9s-egui"
+    # Apps started from Finder don't get the shell PATH, so add Homebrew's for gpg and pinentry-mac.
+    (prefix/"C9s.app/Contents/Info.plist").write <<~XML
+      <?xml version="1.0" encoding="UTF-8"?>
+      <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+      <plist version="1.0">
+      <dict>
+        <key>CFBundleName</key><string>C9s</string>
+        <key>CFBundleDisplayName</key><string>C9s</string>
+        <key>CFBundleIdentifier</key><string>io.github.tmuntaner.c9s</string>
+        <key>CFBundleExecutable</key><string>c9s-egui</string>
+        <key>CFBundlePackageType</key><string>APPL</string>
+        <key>CFBundleVersion</key><string>#{version}</string>
+        <key>CFBundleShortVersionString</key><string>#{version}</string>
+        <key>NSHighResolutionCapable</key><true/>
+        <key>LSEnvironment</key>
+        <dict>
+          <key>PATH</key><string>#{HOMEBREW_PREFIX}/bin:#{HOMEBREW_PREFIX}/sbin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        </dict>
+      </dict>
+      </plist>
+    XML
+  end
+
+  def caveats
+    on_macos do
+      <<~EOS
+        To open the GUI outside the terminal, link the app bundle into your Applications folder:
+          ln -sf #{opt_prefix}/C9s.app ~/Applications/C9s.app
+      EOS
+    end
   end
 
   test do
     assert_match version.to_s, shell_output("#{bin}/c9s --version")
+    # Launching the GUI needs a display, so only check it was installed.
+    assert_path_exists bin/"c9s-egui"
+    assert_path_exists prefix/"C9s.app/Contents/Info.plist" if OS.mac?
   end
 end
