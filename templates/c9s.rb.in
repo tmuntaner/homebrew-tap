@@ -16,9 +16,10 @@ class C9s < Formula
   def install
     # license.txt is generated (and gitignored), but the binary embeds it.
     system "cargo", "about", "generate", "about.txt.hbs", "-o", "license.txt"
-    system "cargo", "install", *std_cargo_args
-    # The GUI is a separate workspace member that a plain build leaves out.
-    system "cargo", "install", *std_cargo_args(path: "apps/c9s-egui")
+    # One workspace build so the CLI and GUI compile their shared dependencies once.
+    # (The GUI is not a default workspace member, so a plain build would leave it out.)
+    system "cargo", "build", "--release", "--locked", "--all"
+    bin.install "target/release/c9s", "target/release/c9s-egui"
 
     install_app_bundle if OS.mac?
   end
