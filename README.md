@@ -2,7 +2,7 @@
 
 Homebrew tap for [tmuntaner](https://github.com/tmuntaner)'s tools. Currently, it provides:
 
-- `c9s`: [c9s](https://github.com/tmuntaner/credential-manager)
+- `c9s`: [c9s](https://github.com/tmuntaner/credential-manager), including the `c9s-egui` desktop app (on macOS it also installs `pinentry-mac`)
 
 ```bash
 brew install tmuntaner/tap/c9s
