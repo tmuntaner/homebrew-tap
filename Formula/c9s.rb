@@ -1,8 +1,8 @@
 class C9s < Formula
   desc "Cloud credential manager"
   homepage "https://github.com/tmuntaner/credential-manager"
-  url "https://github.com/tmuntaner/credential-manager/archive/refs/tags/v0.1.0-beta3.tar.gz"
-  sha256 "6f3ae2ea091f26cb360f4857260b0bb492693d6b4d1572ea3e6a2acc159555bd"
+  url "https://github.com/tmuntaner/credential-manager/archive/refs/tags/v0.1.0-beta4.tar.gz"
+  sha256 "e933586b8b89eaedeb65bcd40616288840a9f9bd78f1259957e6cefaa847ba44"
   license "EUPL-1.2"
 
   depends_on "cargo-about" => :build
